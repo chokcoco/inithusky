@@ -56,8 +56,8 @@ function writeCommitLintPackageJson(isCommitLint) {
       pkgJson.husky.hooks = {};
     }
 
-    if (pkgJson.husky.hooks['pre-commit']) {
-      delete pkgJson.husky.hooks['pre-commit'];
+    if (pkgJson.husky.hooks['commit-msg']) {
+      delete pkgJson.husky.hooks['commit-msg'];
     }
 
     pkgJson.husky.hooks['commit-msg'] = 'commitlint -E HUSKY_GIT_PARAMS';
@@ -102,11 +102,11 @@ function writeEslintPackageJson(isEslint) {
     }
 
     pkgJson.husky.hooks['pre-commit'] = 'lint-staged';
-    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.initHuskyEslintrc --fix', 'git add'];
+    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.eslintrc.json --fix', 'git add'];
 
     // 依赖
     pkgJson.devDependencies.husky = '3.0.3';
-    pkgJson.devDependencies.eslint = '5.16.0';
+    pkgJson.devDependencies.eslint = '^5.16.0';
     pkgJson.devDependencies['babel-eslint'] = '10.0.2';
     pkgJson.devDependencies['eslint-config-airbnb'] = '18.0.1';
     pkgJson.devDependencies['eslint-plugin-import'] = '2.18.2';
@@ -115,7 +115,7 @@ function writeEslintPackageJson(isEslint) {
     pkgJson.devDependencies['lint-staged'] = '9.2.1';
 
     // eslint Rule
-    fs.writeFileSync('./.initHuskyEslintrc', '{"parser":"babel-eslint","extends":"airbnb","env":{"browser":true},"globals":{"__PLATFORM__":true,"__GLOBAL__":true},"rules":{"code":100,"no-bitwise":"off","no-underscore-dangle":"off","react/jsx-filename-extension":"off","react/prop-types":"off","react/no-find-dom-node":"off","import/no-named-as-default":"off","jsx-a11y/no-static-element-interactions":"off","import/no-extraneous-dependencies":"off","react/jsx-no-bind":"off","class-methods-use-this":"off","no-mixed-spaces-and-tabs":"off"}}');
+    fs.writeFileSync('./.eslintrc.json', '{"parser":"babel-eslint","extends":"airbnb","env":{"browser":true},"globals":{"__PLATFORM__":true,"__GLOBAL__":true},"rules":{"code":100,"no-bitwise":"off","no-underscore-dangle":"off","react/jsx-filename-extension":"off","react/prop-types":"off","react/no-find-dom-node":"off","import/no-named-as-default":"off","jsx-a11y/no-static-element-interactions":"off","import/no-extraneous-dependencies":"off","react/jsx-no-bind":"off","class-methods-use-this":"off","no-mixed-spaces-and-tabs":"off"}}');
 
     // rewrite package.json
     fs.writeFileSync('./package.json', JSON.stringify(pkgJson));

@@ -20,7 +20,7 @@
     "shelljs": "^0.8.3",
     "uglify-js": "^3.8.0",
     "husky": "3.0.3",
-    "eslint": "5.16.0",
+    "eslint": "^5.16.0",
     "babel-eslint": "10.0.2",
     "eslint-config-airbnb": "18.0.1",
     "eslint-plugin-import": "2.18.2",
@@ -32,12 +32,13 @@
   },
   "husky": {
     "hooks": {
+      "pre-commit": "lint-staged",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
   "lint-staged": {
     "./src/*.js": [
-      "eslint --config ./.initHuskyEslintrc --fix",
+      "eslint --config ./.eslintrc.json --fix",
       "git add"
     ]
   }
