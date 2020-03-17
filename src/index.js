@@ -1,0 +1,133 @@
+#! /usr/bin/env node
+
+const program = require('commander');
+const inquirer = require('inquirer');
+const chalk = require('chalk');
+const fs = require('fs');
+const shelljs = require("shelljs");
+const UglifyJS = require("uglify-js");
+
+program
+  .action(option => {
+    console.log(chalk.green('欢迎使用自动化 Git 钩子安装程序'));
+
+    inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'isCommitLint',
+        message: '是否需要安装 commitlint Git 钩子?',
+        default: true
+      },
+      {
+        type: 'confirm',
+        name: 'isEslint',
+        message: '是否需要安装 Eslint Git 钩子?',
+        default: true
+      },
+    ]).then((answers) => {
+      this.isCommitLint = answers.isCommitLint;
+      this.isEslint = answers.isEslint;
+
+      writeCommitLintPackageJson(this.isCommitLint);
+      writeEslintPackageJson(this.isEslint);
+
+      if (this.isCommitLint || this.isCommitLint) {
+        end();
+      }
+    });
+  })
+
+function writeCommitLintPackageJson(isCommitLint) {
+  console.log(chalk.green('开始初始化 commitlint 钩子...'));
+
+  const content = fs.readFileSync('./package.json', 'utf-8');
+
+  let pkgJson = JSON.parse(content);
+
+  console.log('pkgJson.husky', pkgJson.husky);
+  console.log('isCommitLint', isCommitLint);
+
+  if (isCommitLint) {
+    if (!pkgJson["husky"]) {
+      pkgJson["husky"] = {};
+    }
+
+    if (!pkgJson["husky"]["hooks"]) {
+      pkgJson["husky"]["hooks"] = {};
+    }
+
+    if (pkgJson["husky"]["hooks"]["pre-commit"]) {
+      delete pkgJson["husky"]["hooks"]["pre-commit"];
+    }
+
+    pkgJson["husky"]["hooks"]["commit-msg"] = "commitlint -E HUSKY_GIT_PARAMS";
+
+    // 依赖
+    pkgJson["devDependencies"]["husky"] = "3.0.3";
+    pkgJson["devDependencies"]["@commitlint/cli"] = "8.3.5";
+    pkgJson["devDependencies"]["@commitlint/config-conventional"] = "8.3.4";
+
+    // commitlint Rule
+    fs.writeFileSync('./commitlint.config.js', "module.exports = { extends: ['@commitlint/config-conventional'] }");
+    // rewrite package.json
+    fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
+
+    end();
+  }
+}
+
+function writeEslintPackageJson(isEslint) {
+  console.log(chalk.green('开始初始化 Eslint 钩子...'));
+
+  const content = fs.readFileSync('./package.json', 'utf-8');
+
+  let pkgJson = JSON.parse(content);
+
+  console.log('pkgJson.husky', pkgJson.husky);
+  console.log('isEslint', isEslint);
+
+  if (isEslint) {
+    if (!pkgJson["husky"]) {
+      pkgJson["husky"] = {};
+    }
+
+    if (!pkgJson["husky"]["hooks"]) {
+      pkgJson["husky"]["hooks"] = {};
+    }
+
+    if (pkgJson["husky"]["hooks"]["pre-commit"]) {
+      delete pkgJson["husky"]["hooks"]["pre-commit"];
+    }
+
+    if (!pkgJson["lint-staged"]) {
+      pkgJson["lint-staged"] = {};
+    }
+
+    pkgJson["husky"]["hooks"]["pre-commit"] = "lint-staged";
+    pkgJson["lint-staged"]["*.js"] = ["eslint --fix", "git add"];
+
+    // 依赖
+    pkgJson["devDependencies"]["husky"] = "3.0.3";
+    pkgJson["devDependencies"]["eslint"] = "5.16.0";
+    pkgJson["devDependencies"]["eslint-config-airbnb"] = "18.0.1";
+    pkgJson["devDependencies"]["eslint-plugin-import"] = "2.18.2";
+    pkgJson["devDependencies"]["eslint-plugin-jsx-a11y"] = "6.2.3";
+    pkgJson["devDependencies"]["eslint-plugin-react"] = "7.14.3";
+    pkgJson["devDependencies"]["lint-staged"] = "9.2.1";
+
+    // eslint Rule
+    fs.writeFileSync('./.eslintrc', '{"parser":"babel-eslint","extends":"airbnb","env":{"browser":true},"globals":{"__PLATFORM__":true,"__GLOBAL__":true},"rules":{"code":100,"no-bitwise":"off","no-underscore-dangle":"off","react/jsx-filename-extension":"off","react/prop-types":"off","react/no-find-dom-node":"off","import/no-named-as-default":"off","jsx-a11y/no-static-element-interactions":"off","import/no-extraneous-dependencies":"off","react/jsx-no-bind":"off","class-methods-use-this":"off","no-mixed-spaces-and-tabs":"off"}}');
+    
+    // rewrite package.json
+    fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
+  }
+}
+
+function end() {
+  console.log(chalk.green('依赖正在安装，可能会占用您两分钟，请稍等...'));
+  shelljs.exec("tnpm install");
+  console.log(`${chalk.cyan("tnpm install")}`);
+  console.log("开启编码之旅!");
+}
+
+program.parse(process.argv);

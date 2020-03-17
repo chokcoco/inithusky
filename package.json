@@ -1,0 +1,45 @@
+{
+  "name": "inithusky",
+  "version": "1.0.0",
+  "description": "Install git hooks automatically.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "inithusky": "inithusky"
+  },
+  "author": "Cocoqiao",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/parser": "^7.8.8",
+    "@babel/traverse": "^7.8.6",
+    "chalk": "^3.0.0",
+    "commander": "^5.0.0",
+    "inquirer": "^7.1.0",
+    "shelljs": "^0.8.3",
+    "uglify-js": "^3.8.0",
+    "husky": "3.0.3",
+    "@commitlint/cli": "8.3.5",
+    "@commitlint/config-conventional": "8.3.4",
+    "eslint": "5.16.0",
+    "babel-eslint": "10.0.2",
+    "eslint-config-airbnb": "18.0.1",
+    "eslint-plugin-import": "2.18.2",
+    "eslint-plugin-jsx-a11y": "6.2.3",
+    "eslint-plugin-react": "7.14.3",
+    "lint-staged": "9.2.1"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "/src/*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  }
+}
