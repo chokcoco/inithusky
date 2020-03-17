@@ -43,7 +43,6 @@ function writeCommitLintPackageJson(isCommitLint) {
   const content = fs.readFileSync('./package.json', 'utf-8');
 
   let pkgJson = JSON.parse(content);
-
   console.log('pkgJson.husky', pkgJson.husky);
   console.log('isCommitLint', isCommitLint);
 
