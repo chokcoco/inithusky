@@ -1,6 +1,6 @@
 {
   "name": "inithusky",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Install git hooks automatically.",
   "main": "index.js",
   "scripts": {
@@ -8,6 +8,10 @@
   },
   "bin": {
     "inithusky": "inithusky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chokcoco/inithusky.git"
   },
   "author": "Cocoqiao",
   "license": "MIT",

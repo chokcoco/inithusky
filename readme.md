@@ -1,3 +1,5 @@
+![npm_version](https://img.shields.io/npm/v/inithusky.svg)
+
 ## initHusky
 
 自己配置 hushy 和 lint-staged 太繁琐？安装 initHusky 一键帮你搞定。
@@ -26,7 +28,11 @@ npm install -g inithusky
 $ inithusky
 ```
 
-选择你要安装的钩子，提供 commitlint（调用 husky 的 commit-msg 钩子） 与 eslint（调用 husky 的 pre-commit）钩子。
+选择你要安装的钩子，提供三种钩子：
+
+1. commitlint（调用 husky 的 commit-msg 钩子） 
+2. eslint（调用 husky 的 pre-commit 钩子）
+3. stylelint（调用 husky 的 pre-commit 钩子）
 
 ```
 $ inithusky
