@@ -5,11 +5,135 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const fs = require('fs');
 const shelljs = require('shelljs');
-const UglifyJS = require('uglify-js');
+const packageJson = require('./package.json');
+
+function end(name) {
+  let shellCode = name === '@tencent/inithusky' ? 'tnpm install' : 'npm install';
+
+  console.log(chalk.green('依赖正在安装，可能会占用您两分钟，请稍等...'));
+  shelljs.exec(shellCode);
+  console.log(`${chalk.cyan(shellCode)}`);
+  console.log('开启编码之旅!');
+}
+
+function writeCommitLintPackageJson(isCommitLint) {
+  if (!isCommitLint) {
+    return;
+  }
+
+  console.log(chalk.green('开始初始化 commitlint 钩子...'));
+
+  const content = fs.readFileSync('./package.json', 'utf-8');
+  const pkgJson = JSON.parse(content);
+
+  if (!pkgJson.husky) {
+    pkgJson.husky = {};
+  }
+
+  if (!pkgJson.husky.hooks) {
+    pkgJson.husky.hooks = {};
+  }
+
+  if (pkgJson.husky.hooks['commit-msg']) {
+    delete pkgJson.husky.hooks['commit-msg'];
+  }
+
+  pkgJson.husky.hooks['commit-msg'] = 'commitlint -E HUSKY_GIT_PARAMS';
+
+  // 依赖
+  pkgJson.devDependencies.husky = '3.0.3';
+  pkgJson.devDependencies['@commitlint/cli'] = '8.3.5';
+  pkgJson.devDependencies['@commitlint/config-conventional'] = '8.3.4';
+
+  // commitlint Rule
+  fs.writeFileSync('./commitlint.config.js', "module.exports = { extends: ['@commitlint/config-conventional'] }");
+  // rewrite package.json
+  fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
+  
+}
+
+function writeEslintPackageJson(isEslint, isStylelint) {
+  if (!isEslint && !isStylelint) {
+    return;
+  }
+
+  console.log(chalk.green('开始初始化 Eslint、Stylelint 钩子...'));
+
+  const content = fs.readFileSync('./package.json', 'utf-8');
+  const pkgJson = JSON.parse(content);
+
+  if (!pkgJson.husky) {
+    pkgJson.husky = {};
+  }
+
+  if (!pkgJson.husky.hooks) {
+    pkgJson.husky.hooks = {};
+  }
+
+  if (pkgJson.husky.hooks['pre-commit']) {
+    delete pkgJson.husky.hooks['pre-commit'];
+  }
+
+  if (!pkgJson['lint-staged']) {
+    pkgJson['lint-staged'] = {};
+  }
+
+  if (!pkgJson.devDependencies) {
+    pkgJson.devDependencies = {};
+  }
+
+  pkgJson.husky.hooks['pre-commit'] = 'lint-staged';
+
+  // 依赖
+  pkgJson.devDependencies.husky = '3.0.3';
+  pkgJson.devDependencies['lint-staged'] = '9.2.1';
+
+  if (isEslint) {
+    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.eslintrc.json --fix', 'git add'];
+
+    pkgJson.devDependencies.eslint = '^5.16.0';
+    pkgJson.devDependencies['babel-eslint'] = '10.0.2';
+    pkgJson.devDependencies['eslint-config-airbnb'] = '18.0.1';
+    pkgJson.devDependencies['eslint-plugin-import'] = '2.18.2';
+    pkgJson.devDependencies['eslint-plugin-jsx-a11y'] = '6.2.3';
+    pkgJson.devDependencies['eslint-plugin-react'] = '7.14.3';
+
+    // eslint Rule
+    fs.writeFileSync('./.eslintrc.json', '{"parser":"babel-eslint","extends":"airbnb","env":{"browser":true},"globals":{"__PLATFORM__":true,"__GLOBAL__":true},"rules":{"code":100,"no-bitwise":"off","no-underscore-dangle":"off","react/jsx-filename-extension":"off","react/prop-types":"off","react/no-find-dom-node":"off","import/no-named-as-default":"off","jsx-a11y/no-static-element-interactions":"off","import/no-extraneous-dependencies":"off","react/jsx-no-bind":"off","class-methods-use-this":"off","no-mixed-spaces-and-tabs":"off"}}');
+  }
+
+  if (isStylelint) {
+    pkgJson['lint-staged']['./css/*.css'] = ['stylelint --config ./.stylelintrc.json --fix', 'git add'];
+
+    pkgJson.devDependencies.stylelint = '^10.1.0';
+    pkgJson.devDependencies['stylelint-config-standard'] = '^18.3.0';
+    pkgJson.devDependencies['stylelint-scss'] = '^3.8.0';
+
+    // stylelint Rule
+    fs.writeFileSync('./.stylelintrc.json', '{"extends":["stylelint-config-standard","stylelint-scss"],"rules":{"indentation":2,"at-rule-no-unknown":[true,{"ignoreAtRules":["mixin","extend","content","function","return"]}]}}');
+  }
+
+  // rewrite package.json
+  fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
+}
 
 program
-  .action((option) => {
+  .version(packageJson.version, '-v, --version')
+  .action(() => {
     console.log(chalk.green('欢迎使用自动化 Git 钩子安装程序'));
+
+    let isReady = false;
+    let name = packageJson.name;
+
+    try {
+      isReady = fs.readFileSync('./package.json', 'utf-8');
+    } catch (e) {
+      console.log(chalk.red('[Error] 请在项目根目录下执行该指令！'));
+    }
+
+    if (!isReady) {
+      return;
+    }
 
     inquirer.prompt([
       {
@@ -21,112 +145,29 @@ program
       {
         type: 'confirm',
         name: 'isEslint',
-        message: '是否需要安装 Eslint Git 钩子?',
+        message: '是否需要安装 Eslint Git 钩子?(对 Javascript 代码进行风格规范检测)',
+        default: true,
+      },
+      {
+        type: 'confirm',
+        name: 'isStylelint',
+        message: '是否需要安装 Stylelint Git 钩子?(对 CSS 代码进行风格规范检测)',
         default: true,
       },
     ]).then((answers) => {
       this.isCommitLint = answers.isCommitLint;
       this.isEslint = answers.isEslint;
+      this.isStylelint = answers.isStylelint;
 
-      writeEslintPackageJson(this.isEslint);
+      writeEslintPackageJson(this.isEslint, this.isStylelint);
       writeCommitLintPackageJson(this.isCommitLint);
 
       if (this.isCommitLint || this.isCommitLint) {
-        end();
+        end(name);
+      } else {
+        console.log(chalk.green('流程结束'));
       }
     });
   });
-
-function writeCommitLintPackageJson(isCommitLint) {
-  console.log(chalk.green('开始初始化 commitlint 钩子...'));
-
-  const content = fs.readFileSync('./package.json', 'utf-8');
-
-  const pkgJson = JSON.parse(content);
-
-  console.log('pkgJson.husky', pkgJson.husky);
-  console.log('isCommitLint', isCommitLint);
-
-  if (isCommitLint) {
-    if (!pkgJson.husky) {
-      pkgJson.husky = {};
-    }
-
-    if (!pkgJson.husky.hooks) {
-      pkgJson.husky.hooks = {};
-    }
-
-    if (pkgJson.husky.hooks['commit-msg']) {
-      delete pkgJson.husky.hooks['commit-msg'];
-    }
-
-    pkgJson.husky.hooks['commit-msg'] = 'commitlint -E HUSKY_GIT_PARAMS';
-
-    // 依赖
-    pkgJson.devDependencies.husky = '3.0.3';
-    pkgJson.devDependencies['@commitlint/cli'] = '8.3.5';
-    pkgJson.devDependencies['@commitlint/config-conventional'] = '8.3.4';
-
-    // commitlint Rule
-    fs.writeFileSync('./commitlint.config.js', "module.exports = { extends: ['@commitlint/config-conventional'] }");
-    // rewrite package.json
-    fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
-  }
-}
-
-function writeEslintPackageJson(isEslint) {
-  console.log(chalk.green('开始初始化 Eslint 钩子...'));
-
-  const content = fs.readFileSync('./package.json', 'utf-8');
-
-  const pkgJson = JSON.parse(content);
-
-  console.log('pkgJson.husky', pkgJson.husky);
-  console.log('isEslint', isEslint);
-
-  if (isEslint) {
-    if (!pkgJson.husky) {
-      pkgJson.husky = {};
-    }
-
-    if (!pkgJson.husky.hooks) {
-      pkgJson.husky.hooks = {};
-    }
-
-    if (pkgJson.husky.hooks['pre-commit']) {
-      delete pkgJson.husky.hooks['pre-commit'];
-    }
-
-    if (!pkgJson['lint-staged']) {
-      pkgJson['lint-staged'] = {};
-    }
-
-    pkgJson.husky.hooks['pre-commit'] = 'lint-staged';
-    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.eslintrc.json --fix', 'git add'];
-
-    // 依赖
-    pkgJson.devDependencies.husky = '3.0.3';
-    pkgJson.devDependencies.eslint = '^5.16.0';
-    pkgJson.devDependencies['babel-eslint'] = '10.0.2';
-    pkgJson.devDependencies['eslint-config-airbnb'] = '18.0.1';
-    pkgJson.devDependencies['eslint-plugin-import'] = '2.18.2';
-    pkgJson.devDependencies['eslint-plugin-jsx-a11y'] = '6.2.3';
-    pkgJson.devDependencies['eslint-plugin-react'] = '7.14.3';
-    pkgJson.devDependencies['lint-staged'] = '9.2.1';
-
-    // eslint Rule
-    fs.writeFileSync('./.eslintrc.json', '{"parser":"babel-eslint","extends":"airbnb","env":{"browser":true},"globals":{"__PLATFORM__":true,"__GLOBAL__":true},"rules":{"code":100,"no-bitwise":"off","no-underscore-dangle":"off","react/jsx-filename-extension":"off","react/prop-types":"off","react/no-find-dom-node":"off","import/no-named-as-default":"off","jsx-a11y/no-static-element-interactions":"off","import/no-extraneous-dependencies":"off","react/jsx-no-bind":"off","class-methods-use-this":"off","no-mixed-spaces-and-tabs":"off"}}');
-
-    // rewrite package.json
-    fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
-  }
-}
-
-function end() {
-  console.log(chalk.green('依赖正在安装，可能会占用您两分钟，请稍等...'));
-  shelljs.exec('tnpm install');
-  console.log(`${chalk.cyan('tnpm install')}`);
-  console.log('开启编码之旅!');
-}
 
 program.parse(process.argv);
