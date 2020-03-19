@@ -7,13 +7,21 @@ const fs = require('fs');
 const shelljs = require('shelljs');
 const packageJson = require('./package.json');
 
-function end(name) {
-  let shellCode = name === '@tencent/inithusky' ? 'tnpm install' : 'npm install';
+let isNpm = true;
+
+function end(opt) {
+  // 同步发布到 npm 与 tnpm，eslint 规则稍有不同
+  let shellCode = isNpm ? 'npm install' : 'tnpm install';
 
   console.log(chalk.green('依赖正在安装，可能会占用您两分钟，请稍等...'));
   shelljs.exec(shellCode);
   console.log(`${chalk.cyan(shellCode)}`);
-  console.log('开启编码之旅!');
+
+  opt.isCommitLint && console.log(chalk.gray('生成 commitlint 配置文件: ') + chalk.yellow('commitlint.config.js'));
+  opt.isEslint && console.log(chalk.gray('生成 eslint 配置文件: ') + chalk.yellow('.eslintrc.js'));
+  opt.isStylelint && console.log(chalk.gray('生成 stylelint 配置文件: ') + chalk.yellow('.stylelintrc.js'));
+
+  console.log('安装结束，开启编码之旅!');
 }
 
 function writeCommitLintPackageJson(isCommitLint) {
@@ -46,7 +54,7 @@ function writeCommitLintPackageJson(isCommitLint) {
   pkgJson.devDependencies['@commitlint/config-conventional'] = '8.3.4';
 
   // commitlint Rule
-  fs.writeFileSync('./commitlint.config.js', "module.exports = { extends: ['@commitlint/config-conventional'] }");
+  fs.copyFileSync(__dirname + '/commitlint.config.js', './commitlint.config.js');
   // rewrite package.json
   fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
   
@@ -89,7 +97,7 @@ function writeEslintPackageJson(isEslint, isStylelint) {
   pkgJson.devDependencies['lint-staged'] = '9.2.1';
 
   if (isEslint) {
-    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.eslintrc.json --fix', 'git add'];
+    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.eslintrc.js --fix', 'git add'];
 
     pkgJson.devDependencies.eslint = '^5.16.0';
     pkgJson.devDependencies['babel-eslint'] = '10.0.2';
@@ -97,20 +105,24 @@ function writeEslintPackageJson(isEslint, isStylelint) {
     pkgJson.devDependencies['eslint-plugin-import'] = '2.18.2';
     pkgJson.devDependencies['eslint-plugin-jsx-a11y'] = '6.2.3';
     pkgJson.devDependencies['eslint-plugin-react'] = '7.14.3';
+    pkgJson.devDependencies['@tencent/eslint-config-tencent'] = '0.3.3';
+
+    let eslintName = isNpm ? '/.eslintrc_npm.js' : '/.eslintrc.js';
 
     // eslint Rule
-    fs.writeFileSync('./.eslintrc.json', '{"parser":"babel-eslint","extends":"airbnb","env":{"browser":true},"globals":{"__PLATFORM__":true,"__GLOBAL__":true},"rules":{"code":100,"no-bitwise":"off","no-underscore-dangle":"off","react/jsx-filename-extension":"off","react/prop-types":"off","react/no-find-dom-node":"off","import/no-named-as-default":"off","jsx-a11y/no-static-element-interactions":"off","import/no-extraneous-dependencies":"off","react/jsx-no-bind":"off","class-methods-use-this":"off","no-mixed-spaces-and-tabs":"off"}}');
+    fs.copyFileSync(__dirname + eslintName, './.eslintrc.js');
   }
 
   if (isStylelint) {
-    pkgJson['lint-staged']['./css/*.css'] = ['stylelint --config ./.stylelintrc.json --fix', 'git add'];
+    pkgJson['lint-staged']['./css/*.css'] = ['stylelint --config ./.stylelintrc.js --fix', 'git add'];
 
     pkgJson.devDependencies.stylelint = '^10.1.0';
     pkgJson.devDependencies['stylelint-config-standard'] = '^18.3.0';
     pkgJson.devDependencies['stylelint-scss'] = '^3.8.0';
 
     // stylelint Rule
-    fs.writeFileSync('./.stylelintrc.json', '{"extends":["stylelint-config-standard","stylelint-scss"],"rules":{"indentation":2,"at-rule-no-unknown":[true,{"ignoreAtRules":["mixin","extend","content","function","return"]}]}}');
+    fs.copyFileSync(__dirname + '/.stylelintrc.js', './.stylelintrc.js');
+
   }
 
   // rewrite package.json
@@ -124,6 +136,8 @@ program
 
     let isReady = false;
     let name = packageJson.name;
+
+    isNpm = name === '@tencent/inithusky' ? false : true;
 
     try {
       isReady = fs.readFileSync('./package.json', 'utf-8');
@@ -162,8 +176,12 @@ program
       writeEslintPackageJson(this.isEslint, this.isStylelint);
       writeCommitLintPackageJson(this.isCommitLint);
 
-      if (this.isCommitLint || this.isCommitLint) {
-        end(name);
+      if (this.isCommitLint || this.isEslint || this.isStylelint) {
+        end({
+          isCommitLint: this.isCommitLint,
+          isEslint: this.isEslint,
+          isStylelint: this.isStylelint
+        });
       } else {
         console.log(chalk.green('流程结束'));
       }

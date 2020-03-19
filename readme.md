@@ -15,7 +15,7 @@
 首先，全局安装 inithusky 指令：
 
 ```
-npm install -g inithusky
+npm install -g @tencent/inithusky
 ```
 
 接着，便可以在任意项目的根目录下创建 Git 钩子。
@@ -57,8 +57,8 @@ $ inithusky
 1. 在项目根目录执行该命令，且确保根目录下已经有了 `package.json` 文件
 2. Git hooks 生效依赖于前置命令 `.git` 文件夹，确保使用该命令时，已经在根目录进行了 `git init` 初始化
 3. commitlint 具体规则请看 [commitlint](https://github.com/conventional-changelog/commitlint)
-4. eslint 默认采用了 eslint-airbnb 的规范，需要修改 eslint 规范可自行修改根目录下的 `.eslintrc.json` 文件
+4. eslint 默认采用了 eslint-airbnb 的规范，需要修改 eslint 规范可自行修改根目录下的 `.eslintrc.js` 文件
 5. eslint 规范检测默认针对 `/src/*.js` 文件，需要修改生效范围，自行修改 `package.json` 下的 lint-stage 配置
-6. stylelint 默认采用了 stylelint-config-standard 的规范，且兼容 SASS ，需要修改 stylelint 规范可自行修改根目录下的 `.stylelint.json` 文件
+6. stylelint 默认采用了 stylelint-config-standard 的规范，且兼容 SASS ，需要修改 stylelint 规范可自行修改根目录下的 `.stylelint.js` 文件
 7. stylelint 规范检测默认针对 `/css/*.css` 文件，需要修改生效范围，自行修改 `package.json` 下的 lint-stage 配置
 
