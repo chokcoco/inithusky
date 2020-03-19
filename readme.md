@@ -2,7 +2,7 @@
 
 ## initHusky
 
-自己配置 hushy 和 lint-staged 太繁琐？安装 initHusky 一键帮你搞定。
+配置 hushy 和 lint-staged 太繁琐？安装 initHusky 一键帮你搞定。
 
 ## Feature
 
