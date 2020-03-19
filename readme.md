@@ -15,7 +15,7 @@
 首先，全局安装 inithusky 指令：
 
 ```
-npm install -g @tencent/inithusky
+npm install -g inithusky
 ```
 
 接着，便可以在任意项目的根目录下创建 Git 钩子。
@@ -45,9 +45,9 @@ $ inithusky
 确定你想安装的钩子之后，
 
 1. 将会自动修改项目根目录下的 `package.json`，添加相关依赖，添加 husky 与 lint-staged 相关配置
-2. 针对 commitlint 钩子，在根目录下新增配置文件 `.commitlint.config.js`
-3. 针对 eslint 钩子，在根目录下新增配置文件 `.eslintrc.json` 配置文件
-4. 针对 stylelint 钩子，在根目录下新增配置文件 `.stylelint.json` 配置文件
+2. 针对 commitlint 钩子，在根目录下新增配置文件 `commitlint.config.js`
+3. 针对 eslint 钩子，在根目录下新增配置文件 `.eslintrc.js` 配置文件
+4. 针对 stylelint 钩子，在根目录下新增配置文件 `.stylelint.js` 配置文件
 5. 自动安装依赖
 
 依赖安装完毕，就可以愉快的使用了。

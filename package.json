@@ -1,6 +1,6 @@
 {
-  "name": "@tencent/inithusky",
-  "version": "1.0.1",
+  "name": "inithusky",
+  "version": "1.0.4",
   "description": "Install git hooks automatically.",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://git.code.oa.com/video_keting_webdoc/inithusky"
+    "url": "https://github.com/chokcoco/inithusky"
   },
   "author": "Cocoqiao",
   "license": "MIT",
