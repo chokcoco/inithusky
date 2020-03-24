@@ -1,6 +1,6 @@
 {
   "name": "inithusky",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Install git hooks automatically.",
   "main": "index.js",
   "scripts": {

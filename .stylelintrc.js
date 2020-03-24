@@ -4,7 +4,6 @@
  * 各团队可根据实际情况自行修改扩充规则
  * http://stylelint.cn/user-guide/rules/
  */
-
 module.exports = {
   "extends": [
     "stylelint-config-standard",
@@ -25,4 +24,4 @@ module.exports = {
       }
     ]
   }
-}
+};
