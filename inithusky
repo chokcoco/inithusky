@@ -6,10 +6,52 @@ const chalk = require('chalk');
 const fs = require('fs');
 const shelljs = require('shelljs');
 const packageJson = require('./package.json');
+const beautify = require('js-beautify').js;
+
+let isCommitLint = false;
+let isEslint = false;;
+let isStylelint = false;
 
 let isNpm = true;
+let husky = {};
+let lintStaged = {};
 
-function end(opt) {
+husky.hooks = {};
+
+/**
+ * 读取 inithusky 命令根目录源文件 source，并且将 fileData 数据追加写入到当前指令执行目录 target 下
+ * @param source 源文件
+ * @param target 目标文件
+ * @param fileData 追加数据
+ */
+function _appendFile(source, target, fileData) {
+  // 读取
+  fs.copyFileSync(__dirname + source, target);
+
+  // 写入
+  fs.appendFileSync(target, `module.exports = ${JSON.stringify(fileData)}`, (err) => {
+    if (err) throw err;
+  });
+
+  // 美化
+  fs.readFile(target, 'utf8', function (err, data) {
+    if (err) {
+        throw err;
+    }
+
+    const beautifyData = beautify(data, { 
+      indent_size: 2, 
+      space_in_empty_paren: true,
+      "end_with_newline": true,
+      "wrap_line_length": 40,
+    });
+
+    // 再写入
+    fs.writeFileSync(target, beautifyData);
+  });
+}
+
+function end() {
   // 同步发布到 npm 与 tnpm，eslint 规则稍有不同
   let shellCode = isNpm ? 'npm install' : 'tnpm install';
 
@@ -17,14 +59,30 @@ function end(opt) {
   shelljs.exec(shellCode);
   console.log(`${chalk.cyan(shellCode)}`);
 
-  opt.isCommitLint && console.log(chalk.gray('生成 commitlint 配置文件: ') + chalk.yellow('commitlint.config.js'));
-  opt.isEslint && console.log(chalk.gray('生成 eslint 配置文件: ') + chalk.yellow('.eslintrc.js'));
-  opt.isStylelint && console.log(chalk.gray('生成 stylelint 配置文件: ') + chalk.yellow('.stylelintrc.js'));
+  isCommitLint && console.log(chalk.gray('生成 commitlint 配置文件: ') + chalk.yellow('commitlint.config.js'));
+  isEslint && console.log(chalk.gray('生成 eslint 配置文件: ') + chalk.yellow('.eslintrc.js'));
+  isStylelint && console.log(chalk.gray('生成 stylelint 配置文件: ') + chalk.yellow('.stylelintrc.js'));
+
+  if (isStylelint || isCommitLint || isEslint) {
+    console.log(chalk.gray('生成 husky 配置文件: ') + chalk.yellow('.huskyrc.js'));
+  }
+
+  if (isStylelint || isEslint) {
+    console.log(chalk.gray('生成 lint-staged 配置文件: ') + chalk.yellow('lint-staged.config.js'));
+  }
 
   console.log('安装结束，开启编码之旅!');
 }
 
-function writeCommitLintPackageJson(isCommitLint) {
+function writeHuskyAndLintstagedFile() {
+  _appendFile('/.huskyrc.js', './.huskyrc.js', husky);
+
+  if (isEslint || isStylelint) {
+    _appendFile('/lint-staged.config.js', './lint-staged.config.js', lintStaged);
+  }
+}
+
+function writeCommitLintPackageJson() {
   if (!isCommitLint) {
     return;
   }
@@ -34,19 +92,15 @@ function writeCommitLintPackageJson(isCommitLint) {
   const content = fs.readFileSync('./package.json', 'utf-8');
   const pkgJson = JSON.parse(content);
 
-  if (!pkgJson.husky) {
-    pkgJson.husky = {};
+  if (pkgJson.husky) {
+    delete pkgJson.husky;
   }
 
-  if (!pkgJson.husky.hooks) {
-    pkgJson.husky.hooks = {};
+  if (!pkgJson.devDependencies) {
+    pkgJson.devDependencies = {};
   }
 
-  if (pkgJson.husky.hooks['commit-msg']) {
-    delete pkgJson.husky.hooks['commit-msg'];
-  }
-
-  pkgJson.husky.hooks['commit-msg'] = 'commitlint -E HUSKY_GIT_PARAMS';
+  husky.hooks['commit-msg'] = 'commitlint -E HUSKY_GIT_PARAMS';
 
   // 依赖
   pkgJson.devDependencies.husky = '3.0.3';
@@ -57,10 +111,9 @@ function writeCommitLintPackageJson(isCommitLint) {
   fs.copyFileSync(__dirname + '/commitlint.config.js', './commitlint.config.js');
   // rewrite package.json
   fs.writeFileSync('./package.json', JSON.stringify(pkgJson));
-  
 }
 
-function writeEslintPackageJson(isEslint, isStylelint) {
+function writeEslintPackageJson() {
   if (!isEslint && !isStylelint) {
     return;
   }
@@ -70,34 +123,26 @@ function writeEslintPackageJson(isEslint, isStylelint) {
   const content = fs.readFileSync('./package.json', 'utf-8');
   const pkgJson = JSON.parse(content);
 
-  if (!pkgJson.husky) {
-    pkgJson.husky = {};
+  if (pkgJson.husky) {
+    delete pkgJson.husky;
   }
 
-  if (!pkgJson.husky.hooks) {
-    pkgJson.husky.hooks = {};
-  }
-
-  if (pkgJson.husky.hooks['pre-commit']) {
-    delete pkgJson.husky.hooks['pre-commit'];
-  }
-
-  if (!pkgJson['lint-staged']) {
-    pkgJson['lint-staged'] = {};
+  if (pkgJson['lint-staged']) {
+    delete pkgJson['lint-staged'];
   }
 
   if (!pkgJson.devDependencies) {
     pkgJson.devDependencies = {};
   }
 
-  pkgJson.husky.hooks['pre-commit'] = 'lint-staged';
+  husky.hooks['pre-commit'] = 'lint-staged';
 
   // 依赖
   pkgJson.devDependencies.husky = '3.0.3';
   pkgJson.devDependencies['lint-staged'] = '9.2.1';
 
   if (isEslint) {
-    pkgJson['lint-staged']['./src/*.js'] = ['eslint --config ./.eslintrc.js --fix', 'git add'];
+    lintStaged['./src/*.js'] = ['eslint --config ./.eslintrc.js --fix', 'git add'];
 
     pkgJson.devDependencies.eslint = '^5.16.0';
     pkgJson.devDependencies['babel-eslint'] = '10.0.2';
@@ -114,7 +159,7 @@ function writeEslintPackageJson(isEslint, isStylelint) {
   }
 
   if (isStylelint) {
-    pkgJson['lint-staged']['./css/*.css'] = ['stylelint --config ./.stylelintrc.js --fix', 'git add'];
+    lintStaged['./css/*.css'] = ['stylelint --config ./.stylelintrc.js --fix', 'git add'];
 
     pkgJson.devDependencies.stylelint = '^10.1.0';
     pkgJson.devDependencies['stylelint-config-standard'] = '^18.3.0';
@@ -122,7 +167,6 @@ function writeEslintPackageJson(isEslint, isStylelint) {
 
     // stylelint Rule
     fs.copyFileSync(__dirname + '/.stylelintrc.js', './.stylelintrc.js');
-
   }
 
   // rewrite package.json
@@ -169,19 +213,16 @@ program
         default: true,
       },
     ]).then((answers) => {
-      this.isCommitLint = answers.isCommitLint;
-      this.isEslint = answers.isEslint;
-      this.isStylelint = answers.isStylelint;
+      isCommitLint = answers.isCommitLint;
+      isEslint = answers.isEslint;
+      isStylelint = answers.isStylelint;
 
-      writeEslintPackageJson(this.isEslint, this.isStylelint);
-      writeCommitLintPackageJson(this.isCommitLint);
+      writeEslintPackageJson(isEslint, isStylelint);
+      writeCommitLintPackageJson(isCommitLint);
 
-      if (this.isCommitLint || this.isEslint || this.isStylelint) {
-        end({
-          isCommitLint: this.isCommitLint,
-          isEslint: this.isEslint,
-          isStylelint: this.isStylelint
-        });
+      if (isCommitLint || isEslint || isStylelint) {
+        writeHuskyAndLintstagedFile();
+        end();
       } else {
         console.log(chalk.green('流程结束'));
       }

@@ -48,7 +48,9 @@ $ inithusky
 2. 针对 commitlint 钩子，在根目录下新增配置文件 `commitlint.config.js`
 3. 针对 eslint 钩子，在根目录下新增配置文件 `.eslintrc.js` 配置文件
 4. 针对 stylelint 钩子，在根目录下新增配置文件 `.stylelint.js` 配置文件
-5. 自动安装依赖
+5. 根据所选钩子，自动生成 `.huskyrc.js` 配置文件，存放 husky 相关配置
+6. 根据所选钩子，自动生成 `lint-staged.config.js` 配置文件，存放 lint-staged 相关配置
+7. 自动安装依赖
 
 依赖安装完毕，就可以愉快的使用了。
 
@@ -61,4 +63,10 @@ $ inithusky
 5. eslint 规范检测默认针对 `/src/*.js` 文件，需要修改生效范围，自行修改 `package.json` 下的 lint-stage 配置
 6. stylelint 默认采用了 stylelint-config-standard 的规范，且兼容 SASS ，需要修改 stylelint 规范可自行修改根目录下的 `.stylelint.js` 文件
 7. stylelint 规范检测默认针对 `/css/*.css` 文件，需要修改生效范围，自行修改 `package.json` 下的 lint-stage 配置
+8. 只要选择了任何一个钩子的安装，将会自动生成 husky 的配置文件 `.huskyrc.js`，且如果 `package.json` 下原本存在 husky 相关配置，将会被覆盖删除，对于一些旧项目需要注意
+9. 选择了安装 eslint 及 stylelint，除了自动生成 husky 的配置文件 `.huskyrc.js`，还好额外生成 lint-staged 的配置文件 `lint-staged.config.js`，且如果 `package.json` 下原本存在 lint-staged 相关配置，将会被覆盖删除，对于一些旧项目需要注意
 
+
+## License
+
+MIT
