@@ -1,6 +1,6 @@
 {
   "name": "inithusky",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Install git hooks automatically.",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "author": "Cocoqiao",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "@babel/parser": "^7.8.8",
     "@babel/traverse": "^7.8.6",
     "chalk": "^3.0.0",
@@ -25,6 +25,5 @@
     "js-beautify": "^1.10.3",
     "shelljs": "^0.8.3",
     "uglify-js": "^3.8.0"
-  },
-  "dependencies": {}
+  }
 }

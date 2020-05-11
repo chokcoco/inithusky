@@ -12,7 +12,6 @@ let isCommitLint = false;
 let isEslint = false;;
 let isStylelint = false;
 
-let isNpm = true;
 let husky = {};
 let lintStaged = {};
 
@@ -53,7 +52,7 @@ function _appendFile(source, target, fileData) {
 
 function end() {
   // 同步发布到 npm 与 tnpm，eslint 规则稍有不同
-  let shellCode = isNpm ? 'npm install' : 'tnpm install';
+  let shellCode = 'npm install';
 
   console.log(chalk.green('依赖正在安装，可能会占用您两分钟，请稍等...'));
   shelljs.exec(shellCode);
@@ -146,13 +145,10 @@ function writeEslintPackageJson() {
 
     pkgJson.devDependencies.eslint = '^5.16.0';
     pkgJson.devDependencies['babel-eslint'] = '10.0.2';
-    pkgJson.devDependencies['eslint-config-airbnb'] = '18.0.1';
+    pkgJson.devDependencies['eslint-config-airbnb-base'] = '14.1.0';
     pkgJson.devDependencies['eslint-plugin-import'] = '2.18.2';
-    pkgJson.devDependencies['eslint-plugin-jsx-a11y'] = '6.2.3';
-    pkgJson.devDependencies['eslint-plugin-react'] = '7.14.3';
-    pkgJson.devDependencies['@tencent/eslint-config-tencent'] = '0.3.3';
 
-    let eslintName = isNpm ? '/.eslintrc_npm.js' : '/.eslintrc.js';
+    let eslintName = '/.eslintrc.js';
 
     // eslint Rule
     fs.copyFileSync(__dirname + eslintName, './.eslintrc.js');
@@ -180,8 +176,6 @@ program
 
     let isReady = false;
     let name = packageJson.name;
-
-    isNpm = name === '@tencent/inithusky' ? false : true;
 
     try {
       isReady = fs.readFileSync('./package.json', 'utf-8');
